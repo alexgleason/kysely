@@ -25,8 +25,12 @@ import {
   expressionBuilder,
   ExpressionBuilder,
 } from '../expression/expression-builder.js'
+import { Database } from '../database.js'
 
-export type SelectExpression<DB, TB extends keyof DB> =
+export type SelectExpression<
+  DB extends Database,
+  TB extends keyof DB['tables']
+> =
   | AnyAliasedColumnWithTable<DB, TB>
   | AnyAliasedColumn<DB, TB>
   | AnyColumnWithTable<DB, TB>
@@ -35,15 +39,19 @@ export type SelectExpression<DB, TB extends keyof DB> =
   | AliasedExpressionOrFactory<DB, TB>
 
 export type SelectArg<
-  DB,
-  TB extends keyof DB,
+  DB extends Database,
+  TB extends keyof DB['tables'],
   SE extends SelectExpression<DB, TB>
 > =
   | SE
   | ReadonlyArray<SE>
   | ((eb: ExpressionBuilder<DB, TB>) => ReadonlyArray<SE>)
 
-export type Selection<DB, TB extends keyof DB, SE> = DrainOuterGeneric<{
+export type Selection<
+  DB extends Database,
+  TB extends keyof DB['tables'],
+  SE
+> = DrainOuterGeneric<{
   [A in ExtractAliasFromSelectExpression<SE>]: SelectType<
     ExtractTypeFromSelectExpression<DB, TB, SE, A>
   >
@@ -73,8 +81,8 @@ type ExtractAliasFromStringSelectExpression<SE extends string> =
     : SE
 
 type ExtractTypeFromSelectExpression<
-  DB,
-  TB extends keyof DB,
+  DB extends Database,
+  TB extends keyof DB['tables'],
   SE,
   A extends keyof any
 > = SE extends string
@@ -104,23 +112,23 @@ type ExtractTypeFromSelectExpression<
   : never
 
 type ExtractTypeFromStringSelectExpression<
-  DB,
-  TB extends keyof DB,
+  DB extends Database,
+  TB extends keyof DB['tables'],
   SE extends string,
   A extends keyof any
 > = SE extends `${infer SC}.${infer T}.${infer C} as ${infer RA}`
   ? RA extends A
     ? `${SC}.${T}` extends TB
-      ? C extends keyof DB[`${SC}.${T}`]
-        ? DB[`${SC}.${T}`][C]
+      ? C extends keyof DB['tables'][`${SC}.${T}`]
+        ? DB['tables'][`${SC}.${T}`][C]
         : never
       : never
     : never
   : SE extends `${infer T}.${infer C} as ${infer RA}`
   ? RA extends A
     ? T extends TB
-      ? C extends keyof DB[T]
-        ? DB[T][C]
+      ? C extends keyof DB['tables'][T]
+        ? DB['tables'][T][C]
         : never
       : never
     : never
@@ -133,16 +141,16 @@ type ExtractTypeFromStringSelectExpression<
   : SE extends `${infer SC}.${infer T}.${infer C}`
   ? C extends A
     ? `${SC}.${T}` extends TB
-      ? C extends keyof DB[`${SC}.${T}`]
-        ? DB[`${SC}.${T}`][C]
+      ? C extends keyof DB['tables'][`${SC}.${T}`]
+        ? DB['tables'][`${SC}.${T}`][C]
         : never
       : never
     : never
   : SE extends `${infer T}.${infer C}`
   ? C extends A
     ? T extends TB
-      ? C extends keyof DB[T]
-        ? DB[T][C]
+      ? C extends keyof DB['tables'][T]
+        ? DB['tables'][T][C]
         : never
       : never
     : never
@@ -152,10 +160,13 @@ type ExtractTypeFromStringSelectExpression<
     : never
   : never
 
-export type AllSelection<DB, TB extends keyof DB> = DrainOuterGeneric<
+export type AllSelection<
+  DB extends Database,
+  TB extends keyof DB['tables']
+> = DrainOuterGeneric<
   Selectable<{
     [C in AnyColumn<DB, TB>]: {
-      [T in TB]: C extends keyof DB[T] ? DB[T][C] : never
+      [T in TB]: C extends keyof DB['tables'][T] ? DB['tables'][T][C] : never
     }[TB]
   }>
 >

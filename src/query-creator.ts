@@ -45,8 +45,10 @@ import {
   Selection,
   parseSelectArg,
 } from './parser/select-parser.js'
+import { Database } from './database.js'
+import { DrainOuterGeneric } from './util/type-utils.js'
 
-export class QueryCreator<DB> {
+export class QueryCreator<DB extends Database> {
   readonly #props: QueryCreatorProps
 
   constructor(props: QueryCreatorProps) {
@@ -160,27 +162,30 @@ export class QueryCreator<DB> {
    *   (select 1 as one) as "q"
    * ```
    */
-  selectFrom<TE extends keyof DB & string>(
+  selectFrom<TE extends keyof DB['tables'] & string>(
     from: TE[]
   ): SelectQueryBuilder<DB, ExtractTableAlias<DB, TE>, {}>
 
-  selectFrom<TE extends TableExpression<DB, keyof DB>>(
+  selectFrom<TE extends TableExpression<DB, keyof DB['tables']>>(
     from: TE[]
   ): SelectQueryBuilder<From<DB, TE>, FromTables<DB, never, TE>, {}>
 
-  selectFrom<TE extends keyof DB & string>(
+  selectFrom<TE extends keyof DB['tables'] & string>(
     from: TE
   ): SelectQueryBuilder<DB, ExtractTableAlias<DB, TE>, {}>
 
   selectFrom<TE extends AnyAliasedTable<DB>>(
     from: TE
   ): SelectQueryBuilder<
-    DB & PickTableWithAlias<DB, TE>,
+    DrainOuterGeneric<{
+      tables: DB['tables'] & PickTableWithAlias<DB, TE>
+      config: DB['config']
+    }>,
     ExtractTableAlias<DB, TE>,
     {}
   >
 
-  selectFrom<TE extends TableExpression<DB, keyof DB>>(
+  selectFrom<TE extends TableExpression<DB, keyof DB['tables']>>(
     from: TE
   ): SelectQueryBuilder<From<DB, TE>, FromTables<DB, never, TE>, {}>
 
@@ -293,7 +298,7 @@ export class QueryCreator<DB> {
    *   .executeTakeFirst()
    * ```
    */
-  insertInto<T extends keyof DB & string>(
+  insertInto<T extends keyof DB['tables'] & string>(
     table: T
   ): InsertQueryBuilder<DB, T, InsertResult> {
     return new InsertQueryBuilder({
@@ -332,7 +337,7 @@ export class QueryCreator<DB> {
    * console.log(result.insertId)
    * ```
    */
-  replaceInto<T extends keyof DB & string>(
+  replaceInto<T extends keyof DB['tables'] & string>(
     table: T
   ): InsertQueryBuilder<DB, T, InsertResult> {
     return new InsertQueryBuilder({
@@ -395,7 +400,7 @@ export class QueryCreator<DB> {
    * where `person`.`id` = ?
    * ```
    */
-  deleteFrom<TR extends keyof DB & string>(
+  deleteFrom<TR extends keyof DB['tables'] & string>(
     from: TR[]
   ): DeleteQueryBuilder<DB, ExtractTableAlias<DB, TR>, DeleteResult>
 
@@ -403,7 +408,7 @@ export class QueryCreator<DB> {
     tables: TR[]
   ): DeleteQueryBuilder<From<DB, TR>, FromTables<DB, never, TR>, DeleteResult>
 
-  deleteFrom<TR extends keyof DB & string>(
+  deleteFrom<TR extends keyof DB['tables'] & string>(
     from: TR
   ): DeleteQueryBuilder<DB, ExtractTableAlias<DB, TR>, DeleteResult>
 
@@ -445,7 +450,7 @@ export class QueryCreator<DB> {
    * console.log(result.numUpdatedRows)
    * ```
    */
-  updateTable<TR extends keyof DB & string>(
+  updateTable<TR extends keyof DB['tables'] & string>(
     table: TR
   ): UpdateQueryBuilder<
     DB,
@@ -457,7 +462,10 @@ export class QueryCreator<DB> {
   updateTable<TR extends AnyAliasedTable<DB>>(
     table: TR
   ): UpdateQueryBuilder<
-    DB & PickTableWithAlias<DB, TR>,
+    DrainOuterGeneric<{
+      tables: DB['tables'] & PickTableWithAlias<DB, TR>
+      config: DB['config']
+    }>,
     ExtractTableAlias<DB, TR>,
     ExtractTableAlias<DB, TR>,
     UpdateResult

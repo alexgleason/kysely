@@ -1,8 +1,13 @@
+import { Database } from '../database.js'
 import { ReturningRow } from '../parser/returning-parser.js'
 import { SelectExpression } from '../parser/select-parser.js'
 import { Selectable } from '../util/column-type.js'
 
-export interface ReturningInterface<DB, TB extends keyof DB, O> {
+export interface ReturningInterface<
+  DB extends Database,
+  TB extends keyof DB['tables'],
+  O
+> {
   /**
    * Allows you to return data from modified rows.
    *
@@ -74,5 +79,5 @@ export interface ReturningInterface<DB, TB extends keyof DB, O> {
    * Adds a `returning *` to an insert/update/delete query on databases
    * that support `returning` such as PostgreSQL.
    */
-  returningAll(): ReturningInterface<DB, TB, Selectable<DB[TB]>>
+  returningAll(): ReturningInterface<DB, TB, Selectable<DB['tables'][TB]>>
 }

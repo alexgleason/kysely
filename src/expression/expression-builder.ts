@@ -49,7 +49,7 @@ import {
   OperatorNode,
   UnaryOperator,
 } from '../operation-node/operator-node.js'
-import { SqlBool } from '../util/type-utils.js'
+import { DrainOuterGeneric, SqlBool } from '../util/type-utils.js'
 import { parseUnaryOperation } from '../parser/unary-operation-parser.js'
 import {
   ExtractTypeFromValueExpression,
@@ -82,8 +82,12 @@ import {
   ValTuple5,
 } from '../parser/tuple-parser.js'
 import { TupleNode } from '../operation-node/tuple-node.js'
+import { Database } from '../database.js'
 
-export interface ExpressionBuilder<DB, TB extends keyof DB> {
+export interface ExpressionBuilder<
+  DB extends Database,
+  TB extends keyof DB['tables']
+> {
   /**
    * Creates a binary expression.
    *
@@ -272,7 +276,7 @@ export interface ExpressionBuilder<DB, TB extends keyof DB> {
    * that case Kysely typings wouldn't allow you to reference `pet.owner_id`
    * because `pet` is not joined to that query.
    */
-  selectFrom<TE extends keyof DB & string>(
+  selectFrom<TE extends keyof DB['tables'] & string>(
     from: TE[]
   ): SelectQueryBuilder<DB, TB | ExtractTableAlias<DB, TE>, {}>
 
@@ -280,14 +284,17 @@ export interface ExpressionBuilder<DB, TB extends keyof DB> {
     from: TE[]
   ): SelectQueryBuilder<From<DB, TE>, FromTables<DB, TB, TE>, {}>
 
-  selectFrom<TE extends keyof DB & string>(
+  selectFrom<TE extends keyof DB['tables'] & string>(
     from: TE
   ): SelectQueryBuilder<DB, TB | ExtractTableAlias<DB, TE>, {}>
 
   selectFrom<TE extends AnyAliasedTable<DB>>(
     from: TE
   ): SelectQueryBuilder<
-    DB & PickTableWithAlias<DB, TE>,
+    DrainOuterGeneric<{
+      tables: DB['tables'] & PickTableWithAlias<DB, TE>
+      config: DB['config']
+    }>,
     TB | ExtractTableAlias<DB, TE>,
     {}
   >
@@ -1059,9 +1066,10 @@ export interface ExpressionBuilder<DB, TB extends keyof DB> {
   withSchema(schema: string): ExpressionBuilder<DB, TB>
 }
 
-export function createExpressionBuilder<DB, TB extends keyof DB>(
-  executor: QueryExecutor = NOOP_QUERY_EXECUTOR
-): ExpressionBuilder<DB, TB> {
+export function createExpressionBuilder<
+  DB extends Database,
+  TB extends keyof DB['tables']
+>(executor: QueryExecutor = NOOP_QUERY_EXECUTOR): ExpressionBuilder<DB, TB> {
   function binary<
     RE extends ReferenceExpression<DB, TB>,
     OP extends BinaryOperatorExpression
@@ -1296,17 +1304,19 @@ export function createExpressionBuilder<DB, TB extends keyof DB>(
   return eb
 }
 
-export function expressionBuilder<DB, TB extends keyof DB>(
-  _: SelectQueryBuilder<DB, TB, any>
-): ExpressionBuilder<DB, TB>
+export function expressionBuilder<
+  DB extends Database,
+  TB extends keyof DB['tables']
+>(_: SelectQueryBuilder<DB, TB, any>): ExpressionBuilder<DB, TB>
 
-export function expressionBuilder<DB, TB extends keyof DB>(): ExpressionBuilder<
-  DB,
-  TB
->
+export function expressionBuilder<
+  DB extends Database,
+  TB extends keyof DB['tables']
+>(): ExpressionBuilder<DB, TB>
 
-export function expressionBuilder<DB, TB extends keyof DB>(
-  _?: unknown
-): ExpressionBuilder<DB, TB> {
+export function expressionBuilder<
+  DB extends Database,
+  TB extends keyof DB['tables']
+>(_?: unknown): ExpressionBuilder<DB, TB> {
   return createExpressionBuilder()
 }
