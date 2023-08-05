@@ -36,15 +36,15 @@ import { Database } from '../database.js'
  * // Columns == 'id' | 'name' | 'species'
  * ```
  */
-export type AnyColumn<
-  DB extends Database,
-  TB extends keyof DB['tables']
-> = DrainOuterGeneric<
-  {
-    [T in TB]: keyof DB['tables'][T]
-  }[TB] &
-    string
->
+export type AnyColumn<DB extends Database, TB extends keyof DB['tables']> =
+  // Inline version of DrainOuterGeneric for performance reasons.
+  // Don't replace with DrainOuterGeneric!
+  [DB] extends [Database]
+    ? {
+        [T in TB]: keyof DB['tables'][T]
+      }[TB] &
+        string
+    : never
 
 /**
  * Extracts a column type.
@@ -53,11 +53,14 @@ export type ExtractColumnType<
   DB extends Database,
   TB extends keyof DB['tables'],
   C
-> = DrainOuterGeneric<
-  {
-    [T in TB]: C extends keyof DB['tables'][T] ? DB['tables'][T][C] : never
-  }[TB]
->
+> =
+  // Inline version of DrainOuterGeneric for performance reasons.
+  // Don't replace with DrainOuterGeneric!
+  [DB] extends [Database]
+    ? {
+        [T in TB]: C extends keyof DB['tables'][T] ? DB['tables'][T][C] : never
+      }[TB]
+    : never
 
 /**
  * Given a database type and a union of table names in that db, returns

@@ -14,6 +14,8 @@ import {
   Selection,
   SelectArg,
   AllSelection,
+  SelectCallback,
+  CallbackSelection,
 } from '../parser/select-parser.js'
 import {
   parseReferenceExpressionOrList,
@@ -26,7 +28,6 @@ import {
   DrainOuterGeneric,
   NarrowPartial,
   Nullable,
-  ShallowRecord,
   Simplify,
   SimplifySingleResult,
   SqlBool,
@@ -77,6 +78,8 @@ import { Streamable } from '../util/streamable.js'
 import { ExpressionOrFactory } from '../parser/expression-parser.js'
 import { ExpressionWrapper } from '../expression/expression-wrapper.js'
 import { Database } from '../database.js'
+import { ExpressionBuilder } from '../expression/expression-builder.js'
+import { AliasedRawBuilder } from '../raw-builder/raw-builder.js'
 
 export interface SelectQueryBuilder<
   DB extends Database,
@@ -307,7 +310,15 @@ export interface SelectQueryBuilder<
    * ```
    */
   select<SE extends SelectExpression<DB, TB>>(
-    selection: SelectArg<DB, TB, SE>
+    selections: ReadonlyArray<SE>
+  ): SelectQueryBuilder<DB, TB, O & Selection<DB, TB, SE>>
+
+  select<CB extends SelectCallback<DB, TB>>(
+    callback: CB
+  ): SelectQueryBuilder<DB, TB, O & CallbackSelection<DB, TB, CB>>
+
+  select<SE extends SelectExpression<DB, TB>>(
+    selection: SE
   ): SelectQueryBuilder<DB, TB, O & Selection<DB, TB, SE>>
 
   /**

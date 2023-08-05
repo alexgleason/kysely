@@ -40,7 +40,9 @@ import { UpdateResult } from './query-builder/update-result.js'
 import { KyselyPlugin } from './plugin/kysely-plugin.js'
 import { CTEBuilderCallback } from './query-builder/cte-builder.js'
 import {
+  CallbackSelection,
   SelectArg,
+  SelectCallback,
   SelectExpression,
   Selection,
   parseSelectArg,
@@ -248,14 +250,26 @@ export class QueryCreator<DB extends Database> {
    * ```
    */
   selectNoFrom<SE extends SelectExpression<DB, never>>(
-    selection: SelectArg<DB, never, SE>
+    selections: ReadonlyArray<SE>
+  ): SelectQueryBuilder<DB, never, Selection<DB, never, SE>>
+
+  selectNoFrom<CB extends SelectCallback<DB, never>>(
+    callback: CB
+  ): SelectQueryBuilder<DB, never, CallbackSelection<DB, never, CB>>
+
+  selectNoFrom<SE extends SelectExpression<DB, never>>(
+    selection: SE
+  ): SelectQueryBuilder<DB, never, Selection<DB, never, SE>>
+
+  selectNoFrom<SE extends SelectExpression<DB, any>>(
+    selection: SelectArg<DB, any, SE>
   ): SelectQueryBuilder<DB, never, Selection<DB, never, SE>> {
     return createSelectQueryBuilder({
       queryId: createQueryId(),
       executor: this.#props.executor,
       queryNode: SelectQueryNode.cloneWithSelections(
         SelectQueryNode.create(this.#props.withNode),
-        parseSelectArg(selection as any)
+        parseSelectArg(selection)
       ),
     })
   }

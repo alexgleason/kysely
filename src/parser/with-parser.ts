@@ -35,8 +35,8 @@ export type QueryCreatorWithCommonTableExpression<
   DB extends Database,
   CN extends string,
   CTE
-> = QueryCreator<
-  DrainOuterGeneric<{
+> = DrainOuterGeneric<
+  QueryCreator<{
     tables: DB['tables'] & {
       [K in ExtractTableFromCommonTableExpressionName<CN>]: ExtractRowFromCommonTableExpression<CTE>
     }
