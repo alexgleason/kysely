@@ -624,11 +624,21 @@ export interface FunctionModule<
     ? ExpressionWrapper<DB, TB, I>
     : KyselyTypeError<'any(expr) call failed: expr must be an array'>
 
-  any<T>(
-    subquery: SelectQueryBuilder<any, any, Record<string, T>>
-  ): ExpressionWrapper<DB, TB, T>
+  any<SQ extends SelectQueryBuilder<any, any, any>>(
+    subquery: SQ
+  ): ExpressionWrapper<
+    DB,
+    TB,
+    SQ extends SelectQueryBuilder<any, any, infer O> ? O[keyof O] : never
+  >
 
-  any<T>(expr: Expression<ReadonlyArray<T>>): ExpressionWrapper<DB, TB, T>
+  any<E extends Expression<ReadonlyArray<unknown>>>(
+    expr: E
+  ): ExpressionWrapper<
+    DB,
+    TB,
+    E extends Expression<ReadonlyArray<infer O>> ? O : never
+  >
 }
 
 export function createFunctionModule<
