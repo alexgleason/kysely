@@ -4,7 +4,7 @@ import { OperationNode } from '../operation-node/operation-node.js'
 import { PrimitiveValueListNode } from '../operation-node/primitive-value-list-node.js'
 import { ValueListNode } from '../operation-node/value-list-node.js'
 import { ValueNode } from '../operation-node/value-node.js'
-import { SelectQueryBuilder } from '../query-builder/select-query-builder.js'
+import { SelectQueryBuilderExpression } from '../query-builder/select-query-builder-expression.js'
 import {
   isBoolean,
   isNull,
@@ -35,15 +35,12 @@ export type ExtractTypeFromValueExpressionOrList<VE> = VE extends ReadonlyArray<
   ? ExtractTypeFromValueExpression<AV>
   : ExtractTypeFromValueExpression<VE>
 
-export type ExtractTypeFromValueExpression<VE> = VE extends SelectQueryBuilder<
-  any,
-  any,
-  Record<string, infer SV>
->
-  ? SV
-  : VE extends Expression<infer V>
-  ? V
-  : VE
+export type ExtractTypeFromValueExpression<VE> =
+  VE extends SelectQueryBuilderExpression<Record<string, infer SV>>
+    ? SV
+    : VE extends Expression<infer V>
+    ? V
+    : VE
 
 export function parseValueExpressionOrList(
   arg: ValueExpressionOrList<any, any, unknown>

@@ -113,9 +113,9 @@ type ExtractTypeFromSelectExpression<
   SE
 > = SE extends string
   ? ExtractTypeFromStringSelectExpression<DB, TB, SE>
-  : SE extends AliasedSelectQueryBuilder<any, any, infer O, any>
+  : SE extends AliasedSelectQueryBuilder<infer O, any>
   ? O[keyof O] | null
-  : SE extends (eb: any) => AliasedSelectQueryBuilder<any, any, infer O, any>
+  : SE extends (eb: any) => AliasedSelectQueryBuilder<infer O, any>
   ? O[keyof O] | null
   : SE extends AliasedExpression<infer O, any>
   ? O

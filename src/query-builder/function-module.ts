@@ -17,7 +17,7 @@ import { parseSelectAll } from '../parser/select-parser.js'
 import { KyselyTypeError } from '../util/type-error.js'
 import { Equals, IsAny } from '../util/type-utils.js'
 import { AggregateFunctionBuilder } from './aggregate-function-builder.js'
-import { SelectQueryBuilder } from './select-query-builder.js'
+import { SelectQueryBuilderExpression } from '../query-builder/select-query-builder-expression.js'
 
 /**
  * Helpers for type safe SQL function calls.
@@ -624,12 +624,12 @@ export interface FunctionModule<
     ? ExpressionWrapper<DB, TB, I>
     : KyselyTypeError<'any(expr) call failed: expr must be an array'>
 
-  any<SQ extends SelectQueryBuilder<any, any, any>>(
+  any<SQ extends SelectQueryBuilderExpression<any>>(
     subquery: SQ
   ): ExpressionWrapper<
     DB,
     TB,
-    SQ extends SelectQueryBuilder<any, any, infer O> ? O[keyof O] : never
+    SQ extends SelectQueryBuilderExpression<infer O> ? O[keyof O] : never
   >
 
   any<E extends Expression<ReadonlyArray<unknown>>>(
